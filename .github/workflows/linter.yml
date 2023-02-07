@@ -1,0 +1,55 @@
+---
+# File is source from LeaLearnsToCode/base-repo-template
+# Do not modify!
+name: Lint Code Base
+
+permissions:
+  actions: write
+  contents: read
+  statuses: write
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pre_job:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          cancel_others: true
+          concurrent_skipping: same_content_newer
+
+  lint:
+    name: Lint Code Base
+    needs: [ pre_job ]
+    if: needs.pre_job.outputs.should_skip != 'true'
+    uses: LeaLearnsToCode/.github-actions/.github/workflows/base-linter.yml@main
+
+##
+## If you need to override the base linter, replace
+## the lint job with this one.
+##
+#  lint:
+#    name: Lint Code Base
+#    needs: [ pre_job ]
+#    if: needs.pre_job.outputs.should_skip != 'true'
+#    steps:
+#    - name: Checkout Code
+#      uses: actions/checkout@v3
+#      with:
+#        fetch-depth: 0
+#
+#    - name: Lint Code Base
+#      uses: github/super-linter@v4
+#      env:
+#        VALIDATE_ALL_CODEBASE: false
+#        DEFAULT_BRANCH: main
+#        GITHUB_TOKEN: ${{ secrets.token }}

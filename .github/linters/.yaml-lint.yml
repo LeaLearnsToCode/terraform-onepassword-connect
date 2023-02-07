@@ -1,0 +1,23 @@
+---
+# File is sourced from LeaLearnsToCode/base-repo-template
+# Do not modify!
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  braces:
+    forbid: true
+
+  brackets:
+    forbid: false
+    min-spaces-inside: 1
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 1
+    max-spaces-inside-empty: 1

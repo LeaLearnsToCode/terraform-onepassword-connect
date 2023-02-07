@@ -1,0 +1,17 @@
+# File is sourced from LeaLearnsToCode/base-repo-template
+# Do not modify!
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.{yml, yaml}]
+indent_size = 2
+
+[*.md]
+max_line_length = off
+
+[justfile]
+indent_size = 2
