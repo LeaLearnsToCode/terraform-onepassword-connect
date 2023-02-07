@@ -12,7 +12,13 @@ variable "dockerhub_user" {
 }
 
 variable "dockerhub_pat" {
-  type = string
+  type      = string
+  sensitive = true
+}
+
+variable "onepassword_secret_id" {
+  type      = string
+  sensitive = false
 }
 
 locals {
@@ -45,7 +51,8 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo yum -y update"
+      "sudo yum -y update",
+      "sudo yum -y install jq"
     ]
   }
 
@@ -58,6 +65,7 @@ build {
       "id ec2-user",
       "newgrp docker",
       "sudo systemctl enable docker.service",
+      "echo Rebooting...",
       "sudo reboot now"
     ]
     expect_disconnect = true
@@ -74,7 +82,7 @@ build {
       "sudo systemctl status docker.service",
 
       "echo Authenticating to dockerhub with user \"$DOCKERHUB_USER\"...",
-      "echo $DOCKERHUB_PAT | docker login docker.io --username $DOCKERHUB_USER --password-stdin"
+      "(echo $DOCKERHUB_PAT | docker login docker.io --username $DOCKERHUB_USER --password-stdin) || true"
     ]
   }
 
@@ -86,6 +94,7 @@ build {
       "source /home/ec2-user/.bashrc",
       "pip3 install --user wheel",
       "pip3 install --user docker-compose",
+      "echo Rebooting...",
       "sudo reboot now"
     ]
     expect_disconnect = true
@@ -93,7 +102,7 @@ build {
 
   provisioner "shell" {
     pause_before = "30s"
-    inline = [
+    inline       = [
       "echo Installing onepassword-connect",
       "mkdir -p /home/ec2-user/onepassword-connect"
     ]
@@ -105,14 +114,22 @@ build {
   }
 
   provisioner "shell" {
-    inline       = [
+    inline = [
       "cd /home/ec2-user/onepassword-connect",
       "docker-compose pull"
     ]
   }
 
+  provisioner "file" {
+    content = templatefile("./start-onepassword-connect.sh", {
+      ONEPASSWORD_SECRET_ID = var.onepassword_secret_id
+    })
+    destination = "/home/ec2-user/start-onepassword-connect.sh"
+  }
+
   provisioner "shell" {
     inline = [
+      "chmod +x /home/ec2-user/start-onepassword-connect.sh",
       "rm -f /home/ec2-user/.docker/config.json"
     ]
   }

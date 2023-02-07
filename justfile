@@ -1,6 +1,7 @@
 #!/usr/bin/env -S just --justfile
 # File is source from LeaLearnsToCode/base-repo-template
 # Do not modify
+set dotenv-load
 set windows-shell := ["pwsh.exe",  "-NoLogo", "-Command"]
 
 log := "warn"
@@ -12,6 +13,7 @@ packer-onepassword:
   packer build \
     -var "dockerhub_user=$Env:DOCKERHUB_USER" \
     -var "dockerhub_pat=$Env:DOCKERHUB_PAT" \
+    -var "onepassword_secret_id=$Env:ONEPASSWORD_SECRET_ID" \
     packer/onepassword-connect.pkr.hcl
 
 # install dev dependencies
