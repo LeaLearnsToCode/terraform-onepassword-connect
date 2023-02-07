@@ -5,6 +5,7 @@
 https://github.com/LeaLearnsToCode/terraform-onepassword-connect/actions/workflows/linter.yml)
 
 TODO:
+
 * 1password AMI
 * Running in EC2
 * outbound tunnel with cloudflare warp
