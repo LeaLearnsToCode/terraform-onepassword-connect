@@ -1,7 +1,11 @@
 
-# Base Repository Template
+# 1password Connect Deployment
 
-[![GitHub Super-Linter](https://github.com/LeaLearnsToCode/base-repo-template/workflows/Lint%20Code%20Base/badge.svg)](
-https://github.com/LeaLearnsToCode/base-repo-template/actions/workflows/linter.yml)
+[![GitHub Super-Linter](https://github.com/LeaLearnsToCode/terraform-onepassword-connect/workflows/Lint%20Code%20Base/badge.svg)](
+https://github.com/LeaLearnsToCode/terraform-onepassword-connect/actions/workflows/linter.yml)
 
-This is my most basic repository template. Contains the linter workflow and some basic config files.
+TODO:
+* 1password AMI
+* Running in EC2
+* outbound tunnel with cloudflare warp
+* ??? host

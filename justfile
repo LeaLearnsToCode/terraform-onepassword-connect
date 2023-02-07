@@ -1,10 +1,23 @@
 #!/usr/bin/env -S just --justfile
 # File is source from LeaLearnsToCode/base-repo-template
 # Do not modify
-set windows-shell := ["powershell.exe",  "-NoLogo", "-Command"]
+set windows-shell := ["pwsh.exe",  "-NoLogo", "-Command"]
 
 log := "warn"
 export JUST_LOG := log
+
+# build onepassword-connect ami with packer
+[windows]
+packer-onepassword:
+  packer build \
+    -var "dockerhub_user=$Env:DOCKERHUB_USER" \
+    -var "dockerhub_pat=$Env:DOCKERHUB_PAT" \
+    packer/onepassword-connect.pkr.hcl
+
+# install dev dependencies
+[windows]
+install-dev-dependencies:
+  scoop install packer
 
 # run github/super-linter locally
 super-linter:
