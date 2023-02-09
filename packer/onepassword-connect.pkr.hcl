@@ -18,41 +18,49 @@ variable "dockerhub_pat" {
 
 variable "onepassword_secret_id" {
   type      = string
-  sensitive = false
+  sensitive = true
+}
+
+variable "onepassword_server_profile_id" {
+  type      = string
+  sensitive = true
 }
 
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
 }
 
-source "amazon-ebs" "onepassword_connect" {
-  ami_name      = "onepassword-connect-${local.timestamp}"
-  instance_type = "t3.micro"
-  region        = "us-west-2"
+source "amazon-ebs" "amzn2" {
+  ami_name             = "onepassword-connect-${local.timestamp}"
+  instance_type        = "t3.micro"
+  region               = "us-west-2"
+  iam_instance_profile = "${var.onepassword_server_profile_id}"
+  ssh_username         = "ec2-user"
+
   source_ami_filter {
     filters = {
       name                = "amzn2-ami-minimal-hvm-*"
+      #name                = "amzn2-ami-hvm-*"
       root-device-type    = "ebs"
       virtualization-type = "hvm"
     }
     most_recent = true
     owners      = ["137112412989"]
   }
-  ssh_username = "ec2-user"
 }
 
 build {
   name    = "onepassword-connect"
   #deprecate_at = timeadd(timestamp(), "525600m") # 1 year
   sources = [
-    "source.amazon-ebs.onepassword_connect"
+    "source.amazon-ebs.amzn2"
   ]
 
 
   provisioner "shell" {
     inline = [
       "sudo yum -y update",
-      "sudo yum -y install jq"
+      "sudo yum -y install awscli jq"
     ]
   }
 
@@ -60,12 +68,18 @@ build {
   provisioner "shell" {
     inline = [
       "echo Installing Docker...",
-      "sudo yum -y install docker",
-      "sudo usermod -a -G docker ec2-user",
-      "id ec2-user",
-      "newgrp docker",
-      "sudo systemctl enable docker.service",
-      "echo Rebooting...",
+      "sudo amazon-linux-extras install docker",
+      "sudo systemctl enable docker",
+      "sudo systemctl start docker",
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "echo Verifying docker is running...",
+      "sudo journalctl -u docker.service -e",
+      "sudo systemctl status docker",
+      "sudo usermod -aG docker $USER",
       "sudo reboot now"
     ]
     expect_disconnect = true
@@ -78,9 +92,8 @@ build {
       "DOCKERHUB_PAT=${var.dockerhub_pat}"
     ]
     inline = [
-      "echo Verifying docker is running...",
-      "sudo systemctl status docker.service",
-
+      "echo Checking docker after reboot",
+      "docker info",
       "echo Authenticating to dockerhub with user \"$DOCKERHUB_USER\"...",
       "(echo $DOCKERHUB_PAT | docker login docker.io --username $DOCKERHUB_USER --password-stdin) || true"
     ]
@@ -134,14 +147,22 @@ build {
     ]
   }
 
-  provider "file" {
+  provisioner "file" {
     source      = "packer/onepassword-connect.service"
-    destination = "/etc/systemd/system/onepassword-connect.service"
+    destination = "/home/ec2-user/onepassword-connect.service"
   }
 
   provisioner "shell" {
+    environment_vars = [
+      "ONEPASSWORD_SECRET_ID=${var.onepassword_secret_id}"
+    ]
     inline = [
+      "sudo mv /home/ec2-user/onepassword-connect.service /etc/systemd/system/onepassword-connect.service",
+      "sudo chown root:root /etc/systemd/system/onepassword-connect.service",
       "sudo systemctl enable onepassword-connect",
+      # TODO: deleat this
+      "echo $(aws secretsmanager get-secret-value --region us-west-2 --secret-id $ONEPASSWORD_SECRET_ID --query \"SecretString\" --output text | jq -r .\\\"1password-credentials.json\\\") > /home/ec2-user/onepassword-connect/1password-credentials.json",
+      "echo Rebooting...",
       "sudo reboot now"
     ]
     expect_disconnect = true
@@ -151,9 +172,15 @@ build {
     pause_before = "30s"
     inline       = [
       "echo Checking that onepassword-connect is running...",
+      "sudo journalctl -u onepassword-connect.service -e",
       "sudo systemctl status onepassword-connect",
     ]
   }
+
+  provisioner "shell" {
+    inline = [
+      "echo Listing All Packages",
+      "sudo yum list installed"
+    ]
+  }
 }
-
-
