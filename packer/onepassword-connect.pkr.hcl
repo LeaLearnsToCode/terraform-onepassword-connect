@@ -133,6 +133,27 @@ build {
       "rm -f /home/ec2-user/.docker/config.json"
     ]
   }
+
+  provider "file" {
+    source      = "packer/onepassword-connect.service"
+    destination = "/etc/systemd/system/onepassword-connect.service"
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo systemctl enable onepassword-connect",
+      "sudo reboot now"
+    ]
+    expect_disconnect = true
+  }
+
+  provisioner "shell" {
+    pause_before = "30s"
+    inline       = [
+      "echo Checking that onepassword-connect is running...",
+      "sudo systemctl status onepassword-connect",
+    ]
+  }
 }
 
 

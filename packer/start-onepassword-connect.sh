@@ -7,4 +7,4 @@ aws secretsmanager get-secret-value \
   --output text | jq -r .\"1password-credentials.json\" \
   > /home/ec2-user/onepassword-connect/1password-credentials.json
 
-docker-compose up
+docker-compose up -d
