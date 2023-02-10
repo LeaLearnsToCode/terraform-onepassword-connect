@@ -26,6 +26,14 @@ variable "onepassword_server_profile_id" {
   sensitive = true
 }
 
+variable "source_repo" {
+  type = string
+}
+
+variable "commit_hash" {
+  type = string
+}
+
 locals {
   timestamp = regex_replace(timestamp(), "[- TZ:]", "")
 }
@@ -34,8 +42,23 @@ source "amazon-ebs" "amzn2" {
   ami_name             = "onepassword-connect-${local.timestamp}"
   instance_type        = "t3.micro"
   region               = "us-west-2"
-  iam_instance_profile = "${var.onepassword_server_profile_id}"
+  iam_instance_profile = var.onepassword_server_profile_id
   ssh_username         = "ec2-user"
+
+  tag {
+    key  = "created-with"
+    value = "automation"
+  }
+
+  tag {
+    key  = "source-repo"
+    value = var.source_repo
+  }
+
+  tag {
+    key   = "commit-hash"
+    value = var.commit_hash
+  }
 
   source_ami_filter {
     filters = {
@@ -56,14 +79,12 @@ build {
     "source.amazon-ebs.amzn2"
   ]
 
-
   provisioner "shell" {
     inline = [
       "sudo yum -y update",
       "sudo yum -y install awscli jq"
     ]
   }
-
 
   provisioner "shell" {
     inline = [
@@ -77,7 +98,7 @@ build {
   provisioner "shell" {
     inline = [
       "echo Verifying docker is running...",
-      "sudo journalctl -u docker.service -e",
+      "sudo journalctl -u docker -e",
       "sudo systemctl status docker",
       "sudo usermod -aG docker $USER",
       "sudo reboot now"
@@ -140,13 +161,6 @@ build {
     destination = "/home/ec2-user/start-onepassword-connect.sh"
   }
 
-  provisioner "shell" {
-    inline = [
-      "chmod +x /home/ec2-user/start-onepassword-connect.sh",
-      "rm -f /home/ec2-user/.docker/config.json"
-    ]
-  }
-
   provisioner "file" {
     source      = "packer/onepassword-connect.service"
     destination = "/home/ec2-user/onepassword-connect.service"
@@ -154,14 +168,14 @@ build {
 
   provisioner "shell" {
     environment_vars = [
-      "ONEPASSWORD_SECRET_ID=${var.onepassword_secret_id}"
+      "ONEPASSWORD_SECRET_ID=${var.onepassword_secret_id}",
+      "ONEPASSWORD_SECRET_PATH=/home/ec2-user/onepassword-connect/1password-credentials.json",
     ]
     inline = [
+      "chmod +x /home/ec2-user/start-onepassword-connect.sh",
       "sudo mv /home/ec2-user/onepassword-connect.service /etc/systemd/system/onepassword-connect.service",
       "sudo chown root:root /etc/systemd/system/onepassword-connect.service",
       "sudo systemctl enable onepassword-connect",
-      # TODO: deleat this
-      "echo $(aws secretsmanager get-secret-value --region us-west-2 --secret-id $ONEPASSWORD_SECRET_ID --query \"SecretString\" --output text | jq -r .\\\"1password-credentials.json\\\") > /home/ec2-user/onepassword-connect/1password-credentials.json",
       "echo Rebooting...",
       "sudo reboot now"
     ]
@@ -172,15 +186,24 @@ build {
     pause_before = "30s"
     inline       = [
       "echo Checking that onepassword-connect is running...",
-      "sudo journalctl -u onepassword-connect.service -e",
+      "sudo journalctl -u onepassword-connect -e",
       "sudo systemctl status onepassword-connect",
     ]
   }
 
   provisioner "shell" {
     inline = [
-      "echo Listing All Packages",
-      "sudo yum list installed"
+      "sudo yum clean all",
+      "sudo rm -rf /var/cache/yum",
+      "sudo yum list installed",
+      "pip3 freeze"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "rm -f /home/ec2-user/onepassword-connect/1password-credentials.json",
+      "rm -f /home/ec2-user/.docker/config.json"
     ]
   }
 }
