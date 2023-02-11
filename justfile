@@ -7,23 +7,27 @@ set windows-shell := ["pwsh.exe",  "-NoLogo", "-Command"]
 log := "warn"
 export JUST_LOG := log
 
+terraform-apply:
+  op run -- terraform apply
+
+terraform-destroy:
+  op run -- terraform destroy
+
 # build onepassword-connect ami with packer
 [windows]
 packer-onepassword:
   @$rev=(git rev-parse "@")
-  packer build \
-    -var "dockerhub_user=$Env:DOCKERHUB_USER" \
-    -var "dockerhub_pat=$Env:DOCKERHUB_PAT" \
-    -var "onepassword_secret_id=$Env:ONEPASSWORD_SECRET_ID" \
-    -var "onepassword_server_profile_id=$Env:ONEPASSWORD_SERVER_PROFILE_ID" \
+  op run -- packer build \
     -var "commit_hash=$rev" \
-    -var "source_repo=LOCAL"\
+    -var "source_repo=LOCAL" \
     packer/onepassword-connect.pkr.hcl
 
 # install dev dependencies
 [windows]
 install-dev-dependencies:
   scoop install packer
+  scoop install terraform
+  scoop install onepassword-cli
 
 # run github/super-linter locally
 super-linter:
