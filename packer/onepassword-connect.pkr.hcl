@@ -26,11 +26,27 @@ variable "onepassword_server_profile_id" {
   sensitive = true
 }
 
-variable "source_repo" {
+variable "app_env" {
   type = string
 }
 
-variable "commit_hash" {
+variable "git_sha" {
+  type = string
+}
+
+variable "git_branch" {
+  type = string
+}
+
+variable "git_repo" {
+  type = string
+}
+
+variable "git_commit" {
+  type = string
+}
+
+variable "git_tag" {
   type = string
 }
 
@@ -51,13 +67,33 @@ source "amazon-ebs" "amzn2" {
   }
 
   tag {
-    key  = "source-repo"
-    value = var.source_repo
+    key  = "app-env"
+    value = var.app_env
   }
 
   tag {
-    key   = "commit-hash"
-    value = var.commit_hash
+    key  = "git-sha"
+    value = var.git_sha
+  }
+
+  tag {
+    key   = "git-branch"
+    value = var.git_branch
+  }
+
+  tag {
+    key   = "git-repo"
+    value = var.git_repo
+  }
+
+  tag {
+    key   = "git-commit"
+    value = var.git_commit
+  }
+
+  tag {
+    key   = "git-tag"
+    value = var.git_tag
   }
 
   source_ami_filter {

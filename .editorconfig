@@ -13,5 +13,5 @@ indent_size = 2
 [*.md]
 max_line_length = off
 
-[justfile]
+[{justfile, *.justfile}]
 indent_size = 2
