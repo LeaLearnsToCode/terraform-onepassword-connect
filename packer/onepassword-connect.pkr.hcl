@@ -7,16 +7,32 @@ packer {
   }
 }
 
+##
+## Rate limit tokens (optional)
+##
 variable "dockerhub_user" {
   type = string
+  default = ""
 }
 
 variable "dockerhub_pat" {
   type      = string
   sensitive = true
+  default = ""
 }
 
+##
+## Required for start script
+##
 variable "onepassword_secret_id" {
+  type      = string
+  sensitive = true
+}
+
+##
+## Testing
+##
+variable "onepassword_credentials_json" {
   type      = string
   sensitive = true
 }
@@ -26,8 +42,16 @@ variable "onepassword_server_profile_id" {
   sensitive = true
 }
 
+##
+## AWS tags
+##
 variable "app_env" {
   type = string
+}
+
+variable "promoted" {
+  type = bool
+  default = false
 }
 
 variable "git_sha" {
@@ -69,6 +93,11 @@ source "amazon-ebs" "amzn2" {
   tag {
     key  = "app-env"
     value = var.app_env
+  }
+
+  tag {
+    key  = "promoted"
+    value = var.promoted
   }
 
   tag {
@@ -202,11 +231,12 @@ build {
     destination = "/home/ec2-user/onepassword-connect.service"
   }
 
+  provisioner "file" {
+    content = var.onepassword_credentials_json
+    destination = "/home/ec2-user/onepassword-connect/1password-credentials.json"
+  }
+
   provisioner "shell" {
-    environment_vars = [
-      "ONEPASSWORD_SECRET_ID=${var.onepassword_secret_id}",
-      "ONEPASSWORD_SECRET_PATH=/home/ec2-user/onepassword-connect/1password-credentials.json",
-    ]
     inline = [
       "chmod +x /home/ec2-user/start-onepassword-connect.sh",
       "sudo mv /home/ec2-user/onepassword-connect.service /etc/systemd/system/onepassword-connect.service",

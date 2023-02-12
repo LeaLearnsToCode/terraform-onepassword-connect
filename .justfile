@@ -16,15 +16,20 @@ terraform-init:
 
 # terraform plan
 terraform-plan:
-  op run -- terraform plan
+  op run -- terraform plan \
+    -var "app_env={{_app_env}}"
+
+#-var "git_tag={{git_tag}}"
 
 # terraform apply
 terraform-apply: _constrain_prod_mode
-  op run -- terraform apply
+  op run -- terraform apply \
+    -var "app_env={{_app_env}}"
 
 # terraform destroy
 terraform-destroy: _constrain_prod_mode
-  op run -- terraform destroy
+  op run -- terraform destroy \
+    -var "app_env={{_app_env}}"
 
 # packer init
 packer-init:
@@ -34,10 +39,11 @@ packer-init:
 packer-build: _constrain_prod_mode
   op run -- packer build \
     -var "app_env={{_app_env}}" \
-    -var "git_sha={{git_sha}}{{ if _has_local_changes == "true" { " [with local changes]" } else { "" } }}" \
+    -var "promoted=false" \
+    -var "git_sha={{git_sha}}{{ if _has_local_changes == "true" { " with local changes" } else { "" } }}" \
     -var "git_branch={{git_branch}}" \
-    -var "git_repo=https://github.com/{{github_repo}}" \
-    -var "git_commit=https://github.com/{{github_repo}}/commit/{{git_sha}}" \
+    -var "git_repo=github.com/{{github_repo}}" \
+    -var "git_commit=github.com/{{github_repo}}/commit/{{git_sha}}" \
     -var "git_tag={{git_tag}}" \
     packer/onepassword-connect.pkr.hcl
 
@@ -61,13 +67,12 @@ install-dependencies:
 
 # install development dependencies for this project
 [linux]
-install-dependencies:
+install-dependencies-ubuntu:
   # packer, terraform come from hashicorp
   curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor --output /usr/share/keyrings/hashicorp-archive-keyring.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] "\
     "https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
     sudo tee /etc/apt/sources.list.d/hashicorp.list
-  sudo apt-get update && sudo apt-get install
 
   #install 1password cli
   curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
@@ -81,7 +86,6 @@ install-dependencies:
   sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
   curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
     sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
-
 
   sudo apt update
   sudo apt install packer terraform 1password-cli
@@ -102,7 +106,7 @@ lint:
     github/super-linter:v4
 
 # TODO: only supports ssh cloning is good enough for me
-github_repo := `git remote get-url origin | sed s/git@github\.com://g | sed s/\.git//g`
+github_repo := `git remote get-url origin | sed s/git@github\.com://g | sed s/\.git//g | xargs`
 git_branch := `git branch --show-current`
 git_sha := `git rev-parse HEAD`
 git_tag := `git tag --points-at HEAD`
