@@ -8,36 +8,25 @@ packer {
 }
 
 ##
-## Rate limit tokens (optional)
+## SSM agent verification keys
+## from: https://docs.aws.amazon.com/systems-manager/latest/userguide/verify-agent-signature.html
+##
+variable "aws_ssm_agent_public_key" {
+  type = string
+}
+
+variable "aws_ssm_agent_fingerprint" {
+  type = string
+}
+
+##
+## Rate limit tokens
 ##
 variable "dockerhub_user" {
-  type = string
-  default = ""
+  type      = string
 }
 
 variable "dockerhub_pat" {
-  type      = string
-  sensitive = true
-  default = ""
-}
-
-##
-## Required for start script
-##
-variable "onepassword_secret_id" {
-  type      = string
-  sensitive = true
-}
-
-##
-## Testing
-##
-variable "onepassword_credentials_json" {
-  type      = string
-  sensitive = true
-}
-
-variable "onepassword_server_profile_id" {
   type      = string
   sensitive = true
 }
@@ -50,7 +39,7 @@ variable "app_env" {
 }
 
 variable "promoted" {
-  type = bool
+  type    = bool
   default = false
 }
 
@@ -82,26 +71,25 @@ source "amazon-ebs" "amzn2" {
   ami_name             = "onepassword-connect-${local.timestamp}"
   instance_type        = "t3.micro"
   region               = "us-west-2"
-  iam_instance_profile = var.onepassword_server_profile_id
   ssh_username         = "ec2-user"
 
   tag {
-    key  = "created-with"
+    key   = "created-with"
     value = "automation"
   }
 
   tag {
-    key  = "app-env"
+    key   = "app-env"
     value = var.app_env
   }
 
   tag {
-    key  = "promoted"
+    key   = "promoted"
     value = var.promoted
   }
 
   tag {
-    key  = "git-sha"
+    key   = "git-sha"
     value = var.git_sha
   }
 
@@ -147,7 +135,31 @@ build {
   provisioner "shell" {
     inline = [
       "sudo yum -y update",
-      "sudo yum -y install awscli jq"
+      "sudo yum -y install awscli jq",
+    ]
+  }
+
+  provisioner "file" {
+    content     = var.aws_ssm_agent_public_key
+    destination = "aws-ssm-agent.gpg"
+  }
+
+  provisioner "shell" {
+    environment_vars = [
+      "AWS_SSM_AGENT_FINGERPRINT=${var.aws_ssm_agent_fingerprint}"
+    ]
+    inline = [
+      "echo Installing AWS SSM Agent...",
+      "sudo gpg --import aws-ssm-agent.gpg",
+      "sudo gpg --fingerprint $AWS_SSM_AGENT_FINGERPRINT",
+      "curl -o amazon-ssm-agent.rpm https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm",
+      "curl -o amazon-ssm-agent.rpm.sig https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm.sig",
+      "sudo gpg --verify amazon-ssm-agent.rpm.sig amazon-ssm-agent.rpm",
+      "sudo yum install -y amazon-ssm-agent.rpm",
+      "sudo systemctl status amazon-ssm-agent",
+      "rm amazon-ssm-agent.rpm.sig",
+      "rm amazon-ssm-agent.rpm",
+      "rm aws-ssm-agent.gpg",
     ]
   }
 
@@ -172,20 +184,7 @@ build {
   }
 
   provisioner "shell" {
-    pause_before     = "30s"
-    environment_vars = [
-      "DOCKERHUB_USER=${var.dockerhub_user}",
-      "DOCKERHUB_PAT=${var.dockerhub_pat}"
-    ]
-    inline = [
-      "echo Checking docker after reboot",
-      "docker info",
-      "echo Authenticating to dockerhub with user \"$DOCKERHUB_USER\"...",
-      "(echo $DOCKERHUB_PAT | docker login docker.io --username $DOCKERHUB_USER --password-stdin) || true"
-    ]
-  }
-
-  provisioner "shell" {
+    pause_before = "30s"
     inline = [
       "echo Installing Docker-compose...",
       "sudo yum install -y python3-pip",
@@ -193,10 +192,7 @@ build {
       "source /home/ec2-user/.bashrc",
       "pip3 install --user wheel",
       "pip3 install --user docker-compose",
-      "echo Rebooting...",
-      "sudo reboot now"
     ]
-    expect_disconnect = true
   }
 
   provisioner "shell" {
@@ -214,15 +210,16 @@ build {
 
   provisioner "shell" {
     inline = [
+      "echo Authenticating to dockerhub with user \"$DOCKERHUB_USER\"...",
+      "echo $DOCKERHUB_PAT | docker login docker.io --username $DOCKERHUB_USER --password-stdin",
       "cd /home/ec2-user/onepassword-connect",
-      "docker-compose pull"
+      "docker-compose pull",
+      "rm -f /home/ec2-user/.docker/config.json"
     ]
   }
 
   provisioner "file" {
-    content = templatefile("./start-onepassword-connect.sh", {
-      ONEPASSWORD_SECRET_ID = var.onepassword_secret_id
-    })
+    source = "packer/start-onepassword-connect.sh"
     destination = "/home/ec2-user/start-onepassword-connect.sh"
   }
 
@@ -231,29 +228,12 @@ build {
     destination = "/home/ec2-user/onepassword-connect.service"
   }
 
-  provisioner "file" {
-    content = var.onepassword_credentials_json
-    destination = "/home/ec2-user/onepassword-connect/1password-credentials.json"
-  }
-
   provisioner "shell" {
     inline = [
       "chmod +x /home/ec2-user/start-onepassword-connect.sh",
       "sudo mv /home/ec2-user/onepassword-connect.service /etc/systemd/system/onepassword-connect.service",
       "sudo chown root:root /etc/systemd/system/onepassword-connect.service",
       "sudo systemctl enable onepassword-connect",
-      "echo Rebooting...",
-      "sudo reboot now"
-    ]
-    expect_disconnect = true
-  }
-
-  provisioner "shell" {
-    pause_before = "30s"
-    inline       = [
-      "echo Checking that onepassword-connect is running...",
-      "sudo journalctl -u onepassword-connect -e",
-      "sudo systemctl status onepassword-connect",
     ]
   }
 
@@ -262,14 +242,15 @@ build {
       "sudo yum clean all",
       "sudo rm -rf /var/cache/yum",
       "sudo yum list installed",
-      "pip3 freeze"
+      "pip3 freeze",
+      "sudo reboot now"
     ]
+    expect_disconnect = true
   }
 
   provisioner "shell" {
     inline = [
-      "rm -f /home/ec2-user/onepassword-connect/1password-credentials.json",
-      "rm -f /home/ec2-user/.docker/config.json"
+      "echo All done!"
     ]
   }
 }
