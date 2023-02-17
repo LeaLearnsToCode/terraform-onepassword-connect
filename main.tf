@@ -2,6 +2,10 @@ variable "onepassword_credentials_json" {
   type = string
 }
 
+variable "cloudflare_account_id" {
+  type = string
+}
+
 variable "app_env" {
   type = string
 }

@@ -4,6 +4,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "4.54.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "4.0.0-rc2"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.4.3"
+    }
   }
 }
 
@@ -28,3 +36,5 @@ provider "aws" {
     }
   }
 }
+
+provider "cloudflare" {}

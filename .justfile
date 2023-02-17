@@ -63,7 +63,7 @@ install-dependencies:
   scoop install sed
   scoop install packer
   scoop install terraform
-  scoop install onepassword-cli
+  scoop install 1password-cli
 
 # install development dependencies for this project
 [linux]

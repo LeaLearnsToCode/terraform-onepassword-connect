@@ -2,7 +2,7 @@ resource "aws_vpc" "main" {
   cidr_block       = local.vpc_cidr
   instance_tenancy = "default"
   tags             = {
-    Name = "${var.app_env}-onepassword-connect-vpc"
+    Name = "${var.app_env}-vpc"
   }
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
 resource "aws_internet_gateway" "gateway" {
   vpc_id = aws_vpc.main.id
   tags   = {
-    Name = "${var.app_env}-onepassword-connect-gateway"
+    Name = "${var.app_env}-gateway"
   }
 }
 
@@ -21,7 +21,7 @@ resource "aws_subnet" "public" {
   availability_zone = "${data.aws_region.current.name}a"
 
   tags = {
-    Name = "${var.app_env}-onepassword-public"
+    Name = "${var.app_env}-public-subnet"
   }
 }
 
@@ -37,14 +37,14 @@ resource "aws_nat_gateway" "public_nat" {
   subnet_id     = aws_subnet.public.id
   allocation_id = aws_eip.ip.id
   tags          = {
-    Name = "${var.app_env}-onepassword-nat"
+    Name = "${var.app_env}-nat-gateway"
   }
 }
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   tags   = {
-    Name = "${var.app_env}-onepassword-public"
+    Name = "${var.app_env}-public-routes"
   }
 }
 
@@ -65,7 +65,7 @@ resource "aws_subnet" "private" {
   availability_zone = "${data.aws_region.current.name}a"
 
   tags = {
-    Name = "${var.app_env}-onepassword-private"
+    Name = "${var.app_env}-private-subnet"
   }
 }
 

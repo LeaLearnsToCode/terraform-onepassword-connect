@@ -165,6 +165,14 @@ build {
 
   provisioner "shell" {
     inline = [
+      "curl -fsSl https://pkg.cloudflare.com/cloudflared-ascii.repo | sudo tee /etc/yum.repos.d/cloudflared-ascii.repo",
+      "sudo yum -y update",
+      "sudo yum install -y cloudflared"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
       "echo Installing Docker...",
       "sudo amazon-linux-extras install docker",
       "sudo systemctl enable docker",
@@ -209,6 +217,10 @@ build {
   }
 
   provisioner "shell" {
+    environment_vars = [
+      "DOCKERHUB_USER=${var.dockerhub_user}",
+      "DOCKERHUB_PAT=${var.dockerhub_pat}"
+    ]
     inline = [
       "echo Authenticating to dockerhub with user \"$DOCKERHUB_USER\"...",
       "echo $DOCKERHUB_PAT | docker login docker.io --username $DOCKERHUB_USER --password-stdin",
@@ -228,12 +240,30 @@ build {
     destination = "/home/ec2-user/onepassword-connect.service"
   }
 
+  provisioner "file" {
+    source      = "packer/cloudflared.service"
+    destination = "/home/ec2-user/cloudflared.service"
+  }
+
+  provisioner "file" {
+    source      = "packer/config.yml"
+    destination = "/home/ec2-user/config.yml.template"
+  }
+
   provisioner "shell" {
     inline = [
       "chmod +x /home/ec2-user/start-onepassword-connect.sh",
       "sudo mv /home/ec2-user/onepassword-connect.service /etc/systemd/system/onepassword-connect.service",
       "sudo chown root:root /etc/systemd/system/onepassword-connect.service",
       "sudo systemctl enable onepassword-connect",
+
+      "sudo mv /home/ec2-user/cloudflared.service /etc/systemd/system/cloudflared.service",
+      "sudo chown root:root /etc/systemd/system/cloudflared.service",
+      "sudo systemctl enable cloudflared",
+
+      "sudo mkdir /etc/cloudflared",
+      "sudo mv /home/ec2-user/config.yml.template /etc/cloudflared/config.yml.template",
+      "sudo chown root:root /etc/cloudflared/config.yml.template",
     ]
   }
 

@@ -1,0 +1,8 @@
+---
+# /etc/cloudflared/config.yml.template
+tunnel: $TUNNEL_ID
+credentials-file: /home/ec2-user/.cloudflared/$TUNNEL_ID.json
+
+ingress:
+  - hostname: $HOSTNAME
+    service: http://localhost:8080
