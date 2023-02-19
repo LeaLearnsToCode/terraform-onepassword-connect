@@ -146,14 +146,16 @@ build {
 
   provisioner "shell" {
     environment_vars = [
-      "AWS_SSM_AGENT_FINGERPRINT=${var.AWS_SSM_AGENT_FINGERPRINT}"
+      "AWS_SSM_AGENT=https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm",
+      "AGENT_SIG=https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm.sig",
+      "AGENT_FINGERPRINT=${var.AWS_SSM_AGENT_FINGERPRINT}",
     ]
     inline = [
       "echo Installing AWS SSM Agent...",
       "sudo gpg --import aws-ssm-agent.gpg",
-      "sudo gpg --fingerprint $AWS_SSM_AGENT_FINGERPRINT",
-      "curl -o amazon-ssm-agent.rpm https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm",
-      "curl -o amazon-ssm-agent.rpm.sig https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm.sig",
+      "sudo gpg --fingerprint $AGENT_FINGERPRINT",
+      "curl -o amazon-ssm-agent.rpm $AWS_SSM_AGENT",
+      "curl -o amazon-ssm-agent.rpm.sig $AGENT_SIG",
       "sudo gpg --verify amazon-ssm-agent.rpm.sig amazon-ssm-agent.rpm",
       "sudo yum install -y amazon-ssm-agent.rpm",
       "sudo systemctl status amazon-ssm-agent",
