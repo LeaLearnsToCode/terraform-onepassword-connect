@@ -1,5 +1,7 @@
 
-resource "aws_kms_key" "secret" {}
+resource "aws_kms_key" "secret" {
+  enable_key_rotation = true
+}
 
 resource "aws_secretsmanager_secret" "onepassword_connect_server" {
   name_prefix = "${var.app_env}-onepassword-server-"

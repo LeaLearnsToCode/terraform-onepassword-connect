@@ -8,6 +8,17 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 }
 
+resource "aws_s3_bucket" "rejected_flow_log" {
+  bucket = "${var.app_env}-vpc-rejected-flow-log"
+}
+
+resource "aws_flow_log" "rejected_traffic_flow_log" {
+  log_destination      = aws_s3_bucket.rejected_flow_log.arn
+  log_destination_type = "s3"
+  traffic_type         = "REJECT"
+  vpc_id               = aws_vpc.main.id
+}
+
 resource "aws_internet_gateway" "gateway" {
   vpc_id = aws_vpc.main.id
   tags   = {
