@@ -12,6 +12,11 @@ resource "aws_s3_bucket" "rejected_flow_log" {
   bucket = "${var.app_env}-vpc-rejected-flow-log"
 }
 
+resource "aws_s3_bucket_acl" "rejected_flow_log" {
+  bucket = aws_s3_bucket.rejected_flow_log.id
+  acl    = "private"
+}
+
 resource "aws_flow_log" "rejected_traffic_flow_log" {
   log_destination      = aws_s3_bucket.rejected_flow_log.arn
   log_destination_type = "s3"
