@@ -17,6 +17,24 @@ resource "aws_s3_bucket_acl" "rejected_flow_log" {
   acl    = "private"
 }
 
+resource "aws_s3_bucket_versioning" "rejected_flow_log" {
+  bucket = aws_s3_bucket.rejected_flow_log.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "example" {
+  bucket = aws_s3_bucket.rejected_flow_log.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.secret.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
 resource "aws_flow_log" "rejected_traffic_flow_log" {
   log_destination      = aws_s3_bucket.rejected_flow_log.arn
   log_destination_type = "s3"
