@@ -67,5 +67,14 @@ resource "aws_instance" "instance" {
 
   tags = {
     onepassword-secret-arn = aws_secretsmanager_secret_version.onepassword_credentials_json.arn
+    cloudflared-secret-arn = aws_secretsmanager_secret_version.cloudflared_secret.arn
   }
+
+  user_data_replace_on_change = true
+  user_data                   = templatefile("./userdata.sh", {
+    domain      = data.cloudflare_zone.domain.name,
+    account     = var.CLOUDFLARE_ACCOUNT_ID,
+    tunnel_id   = cloudflare_tunnel.onepassword.id,
+    tunnel_name = cloudflare_tunnel.onepassword.name
+  })
 }
