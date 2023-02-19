@@ -1,10 +1,14 @@
+
+resource "aws_kms_key" "secret" {}
+
 resource "aws_secretsmanager_secret" "onepassword_connect_server" {
   name_prefix = "${var.app_env}-onepassword-server-"
+  kms_key_id = aws_kms_key.secret.id
 }
 
 resource "aws_secretsmanager_secret_version" "onepassword_credentials_json" {
   secret_id     = aws_secretsmanager_secret.onepassword_connect_server.id
-  secret_string = var.onepassword_credentials_json
+  secret_string = var.ONEPASSWORD_CREDENTIALS_JSON
 }
 
 resource "aws_iam_role" "onepassword_connect_server" {

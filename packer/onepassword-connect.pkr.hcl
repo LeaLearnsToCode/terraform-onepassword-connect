@@ -11,22 +11,22 @@ packer {
 ## SSM agent verification keys
 ## from: https://docs.aws.amazon.com/systems-manager/latest/userguide/verify-agent-signature.html
 ##
-variable "aws_ssm_agent_public_key" {
+variable "AWS_SSM_AGENT_PUBLIC_KEY" {
   type = string
 }
 
-variable "aws_ssm_agent_fingerprint" {
+variable "AWS_SSM_AGENT_FINGERPRINT" {
   type = string
 }
 
 ##
 ## Rate limit tokens
 ##
-variable "dockerhub_user" {
+variable "DOCKERHUB_USER" {
   type      = string
 }
 
-variable "dockerhub_pat" {
+variable "DOCKERHUB_PAT" {
   type      = string
   sensitive = true
 }
@@ -140,13 +140,13 @@ build {
   }
 
   provisioner "file" {
-    content     = var.aws_ssm_agent_public_key
+    content     = var.AWS_SSM_AGENT_PUBLIC_KEY
     destination = "aws-ssm-agent.gpg"
   }
 
   provisioner "shell" {
     environment_vars = [
-      "AWS_SSM_AGENT_FINGERPRINT=${var.aws_ssm_agent_fingerprint}"
+      "AWS_SSM_AGENT_FINGERPRINT=${var.AWS_SSM_AGENT_FINGERPRINT}"
     ]
     inline = [
       "echo Installing AWS SSM Agent...",
@@ -218,8 +218,8 @@ build {
 
   provisioner "shell" {
     environment_vars = [
-      "DOCKERHUB_USER=${var.dockerhub_user}",
-      "DOCKERHUB_PAT=${var.dockerhub_pat}"
+      "DOCKERHUB_USER=${var.DOCKERHUB_USER}",
+      "DOCKERHUB_PAT=${var.DOCKERHUB_PAT}"
     ]
     inline = [
       "echo Authenticating to dockerhub with user \"$DOCKERHUB_USER\"...",

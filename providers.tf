@@ -22,7 +22,7 @@ locals {
   private_cidr = "10.0.1.0/24"
 }
 
-data "aws_caller_identity" "current" {}
+#data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 provider "aws" {
@@ -37,4 +37,8 @@ provider "aws" {
   }
 }
 
-provider "cloudflare" {}
+provider "cloudflare" {
+#  api_hostname = ""
+}
+
+provider "random" {}

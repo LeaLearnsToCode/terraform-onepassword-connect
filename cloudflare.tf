@@ -1,5 +1,5 @@
 resource "cloudflare_access_application" "onepassword" {
-  account_id                = var.cloudflare_account_id
+  account_id                = var.CLOUDFLARE_ACCOUNT_ID
   name                      = "Onepassword Connect"
   domain                    = "op.lealearnstocode.com"
   type                      = "self_hosted"
@@ -9,7 +9,7 @@ resource "cloudflare_access_application" "onepassword" {
 }
 
 resource "cloudflare_access_policy" "onepassword" {
-  account_id                     = var.cloudflare_account_id
+  account_id                     = var.CLOUDFLARE_ACCOUNT_ID
   application_id                 = cloudflare_access_application.onepassword.id
   decision                       = "allow"
   name                           = "Onepassword-Connect"
@@ -28,7 +28,7 @@ resource "random_password" "tunnel_secret" {
 }
 
 resource "cloudflare_tunnel" "onepassword" {
-  account_id = var.cloudflare_account_id
+  account_id = var.CLOUDFLARE_ACCOUNT_ID
   name       = "onepassword-connect"
   secret     = base64encode(random_password.tunnel_secret.result)
 }

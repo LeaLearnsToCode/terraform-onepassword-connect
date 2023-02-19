@@ -1,8 +1,8 @@
-variable "onepassword_credentials_json" {
+variable "ONEPASSWORD_CREDENTIALS_JSON" {
   type = string
 }
 
-variable "cloudflare_account_id" {
+variable "CLOUDFLARE_ACCOUNT_ID" {
   type = string
 }
 
@@ -54,6 +54,7 @@ resource "aws_instance" "instance" {
   instance_type          = "t2.micro"
   iam_instance_profile   = aws_iam_instance_profile.onepassword_connect_server.name
   subnet_id              = aws_subnet.private.id
+  monitoring             = true
   vpc_security_group_ids = [
     aws_security_group.onepassword_connect_server.id
   ]

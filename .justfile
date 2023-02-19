@@ -69,7 +69,8 @@ install-dependencies:
 [linux]
 install-dependencies-ubuntu:
   # packer, terraform come from hashicorp
-  curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor --output /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor \
+    --output /usr/share/keyrings/hashicorp-archive-keyring.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] "\
     "https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
     sudo tee /etc/apt/sources.list.d/hashicorp.list
