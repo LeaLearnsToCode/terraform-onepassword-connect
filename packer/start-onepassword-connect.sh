@@ -12,6 +12,6 @@ echo "$(/usr/bin/aws secretsmanager get-secret-value \
         --secret-id "${SECRET_ARN}" \
         --query "SecretString" \
         --output text)" \
-        > /home/ec2-user/onepassword-connect/1password-credentials.json
+        >/home/ec2-user/onepassword-connect/1password-credentials.json
 
 /home/ec2-user/.local/bin/docker-compose up
