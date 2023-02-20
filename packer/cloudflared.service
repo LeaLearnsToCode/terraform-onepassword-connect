@@ -1,5 +1,4 @@
 # /etc/systemd/system/cloudflared.service
-
 [Unit]
 Description=Cloudflared Argo Tunnel
 After=network.target
@@ -7,7 +6,7 @@ After=network.target
 [Service]
 TimeoutStartSec=0
 Type=notify
-ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml tunnel run onepassword-connect
+ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml tunnel run ${APP_ENV}-onepassword-connect
 Restart=on-failure
 RestartSec=5s
 

@@ -63,22 +63,33 @@ install-dependencies:
   scoop install sed
   scoop install packer
   scoop install terraform
+
+# install the onepassword cli
+[windows]
+install-onepassword:
   scoop install 1password-cli
 
 # install development dependencies for this project
 [linux]
 install-dependencies-ubuntu:
-  # packer, terraform come from hashicorp
   curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor \
     --output /usr/share/keyrings/hashicorp-archive-keyring.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] "\
     "https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
     sudo tee /etc/apt/sources.list.d/hashicorp.list
 
-  #install 1password cli
+  sudo apt update
+  sudo apt install packer terraform
+  packer --version
+  terraform --version
+
+
+#install 1password cli
+[linux]
+install-onepassword-ubuntu:
   curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
     sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] "\
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] " \
     "https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" | \
     sudo tee /etc/apt/sources.list.d/1password.list
   sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
@@ -89,11 +100,7 @@ install-dependencies-ubuntu:
     sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 
   sudo apt update
-  sudo apt install packer terraform 1password-cli
-
-  # output versions/confirm working
-  packer --version
-  terraform --version
+  sudo apt install 1password-cli
   op --version
 
 # run github/super-linter locally

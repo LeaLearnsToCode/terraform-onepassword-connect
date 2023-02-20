@@ -23,7 +23,7 @@ variable "AWS_SSM_AGENT_FINGERPRINT" {
 ## Rate limit tokens
 ##
 variable "DOCKERHUB_USER" {
-  type      = string
+  type = string
 }
 
 variable "DOCKERHUB_PAT" {
@@ -68,10 +68,10 @@ locals {
 }
 
 source "amazon-ebs" "amzn2" {
-  ami_name             = "onepassword-connect-${local.timestamp}"
-  instance_type        = "t3.micro"
-  region               = "us-west-2"
-  ssh_username         = "ec2-user"
+  ami_name      = "onepassword-connect-${local.timestamp}"
+  instance_type = "t2.micro"
+  region        = "us-west-2"
+  ssh_username  = "ec2-user"
 
   tag {
     key   = "created-with"
@@ -116,7 +116,6 @@ source "amazon-ebs" "amzn2" {
   source_ami_filter {
     filters = {
       name                = "amzn2-ami-minimal-hvm-*"
-      #name                = "amzn2-ami-hvm-*"
       root-device-type    = "ebs"
       virtualization-type = "hvm"
     }
@@ -195,7 +194,7 @@ build {
 
   provisioner "shell" {
     pause_before = "30s"
-    inline = [
+    inline       = [
       "echo Installing Docker-compose...",
       "sudo yum install -y python3-pip",
       "echo \"export PATH=\\\"/home/ec2-user/.local/bin:$PATH\\\"\" >> .bashrc",
@@ -233,7 +232,7 @@ build {
   }
 
   provisioner "file" {
-    source = "packer/start-onepassword-connect.sh"
+    source      = "packer/start-onepassword-connect.sh"
     destination = "/home/ec2-user/start-onepassword-connect.sh"
   }
 
@@ -243,13 +242,10 @@ build {
   }
 
   provisioner "file" {
-    source      = "packer/cloudflared.service"
+    content = templatefile("cloudflared.service", {
+      APP_ENV: var.app_env
+    })
     destination = "/home/ec2-user/cloudflared.service"
-  }
-
-  provisioner "file" {
-    source      = "packer/config.yml"
-    destination = "/home/ec2-user/config.yml.template"
   }
 
   provisioner "shell" {
@@ -262,10 +258,7 @@ build {
       "sudo mv /home/ec2-user/cloudflared.service /etc/systemd/system/cloudflared.service",
       "sudo chown root:root /etc/systemd/system/cloudflared.service",
       "sudo systemctl enable cloudflared",
-
-      "sudo mkdir /etc/cloudflared",
-      "sudo mv /home/ec2-user/config.yml.template /etc/cloudflared/config.yml.template",
-      "sudo chown root:root /etc/cloudflared/config.yml.template",
+      "sudo mkdir /etc/cloudflared"
     ]
   }
 

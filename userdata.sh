@@ -26,11 +26,4 @@ tunnel: ${tunnel_id}
 credentials-file: /etc/cloudflared/cert.json
 logfile: /var/log/cloudflared.log
 loglevel: info
-
-ingress:
-
-  - hostname: op.${domain}
-    service: http://localhost:8080
-  - hostname: "*"
-    service: hello-world
 EOF

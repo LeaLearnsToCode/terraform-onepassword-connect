@@ -37,8 +37,5 @@ provider "aws" {
   }
 }
 
-provider "cloudflare" {
-#  api_hostname = ""
-}
-
+provider "cloudflare" {}
 provider "random" {}

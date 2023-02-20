@@ -24,7 +24,7 @@ resource "aws_s3_bucket_versioning" "rejected_flow_log" {
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "example" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "encrypt" {
   bucket = aws_s3_bucket.rejected_flow_log.id
 
   rule {
