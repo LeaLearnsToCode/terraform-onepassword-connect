@@ -23,7 +23,7 @@ jobs:
       template_repo: ${{ steps.template.outputs.template_repo }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Load .gittemplate
         id: template
